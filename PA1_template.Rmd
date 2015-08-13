@@ -4,22 +4,137 @@ output:
   html_document:
     keep_md: true
 ---
-
+## Load Environment
+```{r echo=TRUE}
+library(data.table)
+library(dplyr)
+library(lubridate)
+```
 
 ## Loading and preprocessing the data
+Download data  
+```{r echo=TRUE}
+Sys.time()
+```
+[1] "2015-08-12 13:47:26 CDT"
 
+###Unzip
+TODO: Change into an if statement.
+```{r echo=TRUE}
+unzip("activity.zip")
+```
 
+###Read
+```{r echo=TRUE}
+rawdata <- read.csv("activity.csv")
+```
+
+####Create data table.
+To enable use of dplyr and lubridate functions.
+```{r echo=TRUE}
+dtdata <- data.table(rawdata)
+```
+
+###Examine
+The data is comprised of 17568 observations of three variable: steps, date, interval.  
+There are 61 days; however, only [] have data.
+For each day, there are 288 observations (12x24). An observation is taken at 5 minute intervals.
+
+```{r echo=TRUE}
+dim(rawdata)
+head(rawdata)
+lapply(rawdata,class)
+lapply(rawdata,table)
+table(is.na(rawdata$steps))
+table(is.na(rawdata$date))
+table(is.na(rawdata$interval))
+```
+
+53 of the 61 dates have data. Eight are NA.
+> length(table(subdate2$sumbydate))
+[1] 53
 
 ## What is mean total number of steps taken per day?
+For this part of the assignment, you can ignore the missing values in
+the dataset.
 
+1. Make a histogram of the total number of steps taken each day.  
+2. Calculate and report the **mean** and **median** total number of steps taken per day.  
+```{r echo=TRUE}
+hist(rawdata$steps)
+
+sum(!is.na(rawdata$steps))
+```
+
+
+```{r echo=TRUE}
+subdate <- dtdata[ ,sum(steps), by=date]
+subdate2 <- summarize(group_by(dtdata, date), sumbydate=sum(steps))
+subdate3 <- summarize(group_by(dtdata, date), meanbydate=mean(steps))
+subdate4 <- summarize(group_by(dtdata, date), medianbydate=as.double(median(steps, na.rm=TRUE)))
+```
+The NA values are in entire days. So those days are NA.
+hist(subdate2$sumbydate)
+table(subdate2$sumbydate)
+
+On the intervals you have to remove NAs since every interval has 8 instances of NA.s
+```{r echo=TRUE}
+subinterval2 <- summarize(group_by(dtdata, interval), sumbyinterval=sum(steps, na.rm=TRUE))
+subinterval3 <- summarize(group_by(dtdata, interval), meanbyinterval=mean(steps, na.rm=TRUE))
+subinterval4 <- summarize(group_by(dtdata, interval), medianbyinterval=as.double(median(steps, na.rm=TRUE)))
+```
 
 
 ## What is the average daily activity pattern?
+1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
+daymean <- dtdata[ ,mean(steps), by=date]
+daymax <- dtdata[ ,max(steps), by=interval]
+new <- dtdata[ ,max(steps), by=interval &]
+x <- which(daymax$interval = "2355")
+
+```{r echo=TRUE}
+intervalmeans <- subinterval3$meanbyinterval
+max(intervalmeans) #206.1698 average number of steps
+which(dtdata[,subinterval3$meanbyinterval] == max(intervalmeans)) #indices 104
+dtdata[104,] #835 This must be wrong. I
+subinterval3[104,] #Maybe it's right 835.
+
+```
+
+max(subinterval3$meanbydate)
 
 ## Imputing missing values
+Note that there are a number of days/intervals where there are missing
+values (coded as `NA`). The presence of missing days may introduce
+bias into some calculations or summaries of the data.
+
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+bad <- which(is.na(dtdata$steps)) # returns indices
+So the answer is 2304?
+dtdata[1:20, 1]
+
+
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+For this part the `weekdays()` function may be of some help here. Use
+the dataset with the filled-in missing values for this part.
+
+1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
+
+
+library(lubridate)
+
