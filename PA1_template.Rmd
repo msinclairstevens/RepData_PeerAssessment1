@@ -4,11 +4,12 @@ output:
   html_document:
     keep_md: true
 ---
-## Load Environment
+## Load environment
 ```{r echo=TRUE}
 library(data.table)
 library(dplyr)
 library(lubridate)
+library(knitr)
 ```
 
 ## Loading and preprocessing the data
@@ -18,41 +19,43 @@ Sys.time()
 ```
 [1] "2015-08-12 13:47:26 CDT"
 
-###Unzip
+### Unzip
 TODO: Change into an if statement.
 ```{r echo=TRUE}
 unzip("activity.zip")
 ```
 
-###Read
+### Read
 ```{r echo=TRUE}
 rawdata <- read.csv("activity.csv")
 ```
 
-####Create data table.
-To enable use of dplyr and lubridate functions.
-```{r echo=TRUE}
-dtdata <- data.table(rawdata)
-```
 
-###Examine
+### Examine
+```{r echo=TRUE}
+summary(rawdata) #Use this. It gives the best overview. Don't have to do the NA check below.
+
+```
 The data is comprised of 17568 observations of three variable: steps, date, interval.  
-There are 61 days; however, only [] have data.
+There are 61 days; however, only 53 have data.  
+The remaining 8 days are populated with NA values; NA values are only in these 8 days.  
+#53 of the 61 dates have data. Eight are NA.  
+# > length(table(subdate2$sumbydate))  
+# [1] 53  
 For each day, there are 288 observations (12x24). An observation is taken at 5 minute intervals.
 
 ```{r echo=TRUE}
-dim(rawdata)
 head(rawdata)
-lapply(rawdata,class)
-lapply(rawdata,table)
-table(is.na(rawdata$steps))
-table(is.na(rawdata$date))
-table(is.na(rawdata$interval))
+
 ```
 
-53 of the 61 dates have data. Eight are NA.
-> length(table(subdate2$sumbydate))
-[1] 53
+#### Create data table.
+To enable use of dplyr and lubridate functions.
+```{r echo=TRUE}
+dtdata <- data.table(rawdata)
+dtdata
+```
+
 
 ## What is mean total number of steps taken per day?
 For this part of the assignment, you can ignore the missing values in
@@ -60,41 +63,66 @@ the dataset.
 
 1. Make a histogram of the total number of steps taken each day.  
 2. Calculate and report the **mean** and **median** total number of steps taken per day.  
-```{r echo=TRUE}
-hist(rawdata$steps)
 
-sum(!is.na(rawdata$steps))
+### Calculate sum, mean, and median by date.
+```{r echo=TRUE}
+calcsfordate <- summarize(group_by(dtdata,date),
+                         totalfordate = sum(steps),
+                         averagefordate = mean(steps),
+                         medianfordate = as.double(median(steps, na.rm=TRUE))
+                         )
+print(calcsfordate[,]) #TODO I want to see all 61 obs
+write.table(calcsfordate) #TODO This works but not formatted
+kable(calcsfordate) #Why did this print to the console but not to knitr? 
 ```
 
+### Graph total number of steps taken
+I don't really see what this shows. It doesn't seem to match the table of the same variable. It should be ordered by date already, but it doesn't seem to be.
 
 ```{r echo=TRUE}
-subdate <- dtdata[ ,sum(steps), by=date]
-subdate2 <- summarize(group_by(dtdata, date), sumbydate=sum(steps))
-subdate3 <- summarize(group_by(dtdata, date), meanbydate=mean(steps))
-subdate4 <- summarize(group_by(dtdata, date), medianbydate=as.double(median(steps, na.rm=TRUE)))
+hist(calcsfordate$totalfordate, breaks=61)
 ```
+
+```{r echo=TRUE}
+#total number of steps taken each day
+table(calcsfordate$totalfordate) #53 days. Not in date order.
+
+#mean number of steps taken each day
+calcsfordate$averagefordate
+
+#median number of steps taken each day
+calcsfordate$averagefordate
+
+select(calcsfordate, averagefordate, medianfordate)
+
+View(select(calcsfordate, averagefordate, medianfordate)) # TODO I want to see all 61 obs
+```
+
 The NA values are in entire days. So those days are NA.
-hist(subdate2$sumbydate)
-table(subdate2$sumbydate)
 
+
+### Calculate sum, mean, and median by interval.
 On the intervals you have to remove NAs since every interval has 8 instances of NA.s
 ```{r echo=TRUE}
-subinterval2 <- summarize(group_by(dtdata, interval), sumbyinterval=sum(steps, na.rm=TRUE))
-subinterval3 <- summarize(group_by(dtdata, interval), meanbyinterval=mean(steps, na.rm=TRUE))
-subinterval4 <- summarize(group_by(dtdata, interval), medianbyinterval=as.double(median(steps, na.rm=TRUE)))
+
+calcsforinterval <- summarize(group_by(dtdata,interval),
+                             totalforinterval = sum(steps, na.rm=TRUE),
+                             averageforinterval = mean(steps, na.rm=TRUE),
+                             medianforinterval = as.double(median(steps, na.rm=TRUE))
+                             )
+
+print(calcsforinterval)
 ```
+
 
 
 ## What is the average daily activity pattern?
 1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+# Answer Eyeballing: 104      835        10927    206.1698113            19
 
-daymean <- dtdata[ ,mean(steps), by=date]
-daymax <- dtdata[ ,max(steps), by=interval]
-new <- dtdata[ ,max(steps), by=interval &]
-x <- which(daymax$interval = "2355")
-
+#TODO Use new variable names
 ```{r echo=TRUE}
 intervalmeans <- subinterval3$meanbyinterval
 max(intervalmeans) #206.1698 average number of steps
@@ -119,10 +147,18 @@ bias into some calculations or summaries of the data.
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
+A1: Eight days (columns) have NAs so ALL the rows have NAs. Isn't it more interesting to know which of the columns(dates) have NAs?
+288*8= 2304 = Total NAs. This is confirmed in the summary.
+
+
+summary(dtdata)
+countofmissing <- count(is.na(dtda)
+
 bad <- which(is.na(dtdata$steps)) # returns indices
 So the answer is 2304?
 dtdata[1:20, 1]
 
+A2: Use mean for interval to fill in missing NA
 
 
 
