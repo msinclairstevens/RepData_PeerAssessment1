@@ -32,8 +32,10 @@ if(!file.exists("activity.zip")){
   fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
   download.file(fileUrl,destfile="activity.zip",method="curl")
   dateDownloaded <- date()
-  print(paste("Date downloaded:", date(), sep = " "))
+  }else{  
+  dateDownloaded <- file.info("activity.csv")$ctime
   }
+print(paste("Date downloaded:", dateDownloaded, sep = " "))
 ```
 
 
@@ -55,17 +57,18 @@ rawdata <- read.csv("activity.csv")
 summary(rawdata)
 
 ```
-The data is comprised of 17568 observations of three variables: 
- * steps
- * date
- * interval
+The data is comprised of 17568 observations of three variables:  
+- steps  
+- date  
+- interval   
+ 
 The period of observation spans 61 days from October 1, 2012 to November 30, 2012; however, only 53 have data.  
 The remaining 8 days are populated with NA values; NA values exist only in these 8 days.  
 
-# TODO
-#53 of the 61 dates have data. Eight are NA.  
-# > length(table(subdate2$sumbydate))  
-# [1] 53  
+TODO
+53 of the 61 dates have data. Eight are NA.  
+ > length(table(subdate2$sumbydate))  
+ [1] 53  
 
 For each day, there are 288 observations (12x24). An observation is taken at 5 minute intervals.
 
@@ -73,6 +76,9 @@ For each day, there are 288 observations (12x24). An observation is taken at 5 m
 head(rawdata)
 
 ```
+
+### Clean
+My personal preference is to convert data frames to data tables.
 
 #### Create data table.
 To enable use of dplyr and lubridate functions.
@@ -100,14 +106,17 @@ kable(calcsfordate)
 
 #total number of steps taken each day
 table(calcsfordate$totalfordate) #53 days. Not in date order.
+min(calcsfordate$totalfordate, na.rm=TRUE)
+max(calcsfordate$totalfordate, na.rm=TRUE)
 ```
 
 ### Graph total number of steps taken
-I don't really see what this shows. It doesn't seem to match the table of the same variable. It should be ordered by date already, but it doesn't seem to be.
+For me challenge to this histogram is deciding what a meaningful number of breakpoints should be. 
+The average total number of steps per day ranges from zero to 21194, so I went with groups of 2000 steps. 
+More than that results in too many empty "bins" in the histogram.
 
 ```{r echo=TRUE}
-hist(calcsfordate$totalfordate, breaks=61)
-hist(calcsfordate$totalfordate, breaks=20)
+hist(calcsfordate$totalfordate, breaks=10, main="Spread of average number of steps each day", xlab="Average number of steps a day range from 41 to 21194", ylab="Number of observations in each range")
 ```
 
 ### Report the mean and median number of steps taken each day
@@ -120,9 +129,8 @@ The NA values are in entire days. So those days are NA.
 
 
 ### Calculate sum, mean, and median by interval.
-On the intervals you have to remove NAs since every interval has 8 instances of NA.s
+When aggregating data for the intervals, remove NAs since every interval has eight instances of NAs.
 ```{r echo=TRUE}
-
 calcsforinterval <- summarize(group_by(dtdata,interval),
                              totalforinterval = sum(steps, na.rm=TRUE),
                              averageforinterval = mean(steps, na.rm=TRUE),
@@ -131,7 +139,6 @@ calcsforinterval <- summarize(group_by(dtdata,interval),
 
 kable(calcsforinterval)
 ```
-
 
 
 ## What is the average daily activity pattern?
@@ -145,9 +152,8 @@ x <- axTicks(1) # Seems like you have to make it match the ticks.
 axis(1, at=x, labels=c("00:00", "05:00", "10:00", "15:00", "20:00"))
 ```
 
-2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-
-Answer Eyeballing: 104      835        10927    206.1698113            19
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?  
+Answer from eyeballing data: 104      835        10927    206.1698113            19
 
 ### Find the maximum average number of steps in a 5-minute interval.
 ```{r echo=TRUE}
@@ -159,7 +165,6 @@ calcsforinterval[104,]
 ```
 
 The 5-minute interval with the largest average number of steps begins at 08:35 AM; the average number of steps during that interval is a little more than 206.
-
 
 
 ## Imputing missing values
