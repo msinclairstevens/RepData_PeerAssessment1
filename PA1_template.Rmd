@@ -5,42 +5,68 @@ output:
     keep_md: true
 ---
 ## Load environment
-```{r echo=TRUE}
+Load the packages required.
+```{r echo=TRUE, results='hide'}
 library(data.table)
 library(dplyr)
 library(lubridate)
 library(knitr)
+
+```
+
+### Report session environment
+```{r echo=TRUE}
+sessionInfo()
 ```
 
 ## Loading and preprocessing the data
-Download data  
+
+### Download
+Download the data.
+I forked a github project via RStudio but the data can be downloaded programmatically from the following URL:
+https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip
+
 ```{r echo=TRUE}
-Sys.time()
+setwd("~/WorkDirDataScience/RepData_PeerAssessment1")
+if(!file.exists("activity.zip")){
+  fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+  download.file(fileUrl,destfile="activity.zip",method="curl")
+  dateDownloaded <- date()
+  print(paste("Date downloaded:", date(), sep = " "))
+  }
 ```
-[1] "2015-08-12 13:47:26 CDT"
+
 
 ### Unzip
-TODO: Change into an if statement.
+Sometimes on my machine, zip files automatically unzip after downloading.  
+Check for that before unzipping the data.
 ```{r echo=TRUE}
-unzip("activity.zip")
+if(!file.exists("activity.csv")) {unzip("activity.zip")}
+
 ```
 
-### Read
+### Import
 ```{r echo=TRUE}
 rawdata <- read.csv("activity.csv")
 ```
 
 ### Examine
 ```{r echo=TRUE}
-summary(rawdata) #Use this. It gives the best overview. Don't have to do the NA check below.
+summary(rawdata)
 
 ```
-The data is comprised of 17568 observations of three variable: steps, date, interval.  
-There are 61 days; however, only 53 have data.  
-The remaining 8 days are populated with NA values; NA values are only in these 8 days.  
+The data is comprised of 17568 observations of three variables: 
+ * steps
+ * date
+ * interval
+The period of observation spans 61 days from October 1, 2012 to November 30, 2012; however, only 53 have data.  
+The remaining 8 days are populated with NA values; NA values exist only in these 8 days.  
+
+# TODO
 #53 of the 61 dates have data. Eight are NA.  
 # > length(table(subdate2$sumbydate))  
 # [1] 53  
+
 For each day, there are 288 observations (12x24). An observation is taken at 5 minute intervals.
 
 ```{r echo=TRUE}
@@ -165,11 +191,8 @@ procdata <- dtdata %>%
   select(date, interval, steps) %>%
   group_by(interval)%>%
   mutate(avg = mean(steps, na.rm=TRUE))
- 
-  
 
-
- 
+summary(procdata) 
 ```
 
 TODO: THIS MIGHT FINALLY WORK
@@ -180,33 +203,25 @@ for (i in 1:v) {
   if (!is.na(procdata$steps[i])==TRUE) {
     }else{
     procdata$steps[i] <- procdata$avg[i] 
+    
   }
 }
 
+summary(procdata)
 ```
-  
+  Result: The median, mean, and max number of steps each day remains the same.  
+  However, the additional 2304 observations set to the mean skews the results and changes the 3rd quartile.
 This works singly. How to make it work in a loop?
 
-> procdata$step[270]
-[1] NA
-> procdata$avg[270]
-[1] 8.698113
-> procdata$step[270] <- procdata$avg[270]
-> procdata$step[270]
-[1] 8.698113
 
- procdata$step[270] <- procdata$avg[270]
-> procdata$step[270]
-
-
-
+    
 4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 ```{r echo=TRUE}
 calcsforprocdate <- summarize(group_by(procdata,date),
                          totalfordate = sum(steps),
                          averagefordate = mean(steps),
-                         medianfordate = as.double(median(steps, na.rm=TRUE))
+                         medianfordate = as.double(median(steps))
                          )
 ```                         
 
@@ -216,6 +231,11 @@ hist(procdata$steps, breaks=20)
 ```
 
 ### Report the mean and median number of steps taken each day
+
+The eight days that showed an NA for the average number of steps a day ahould now show 37.38.  
+The other days should have the same number.
+
+TODO Why is the median still wrong
 
 ```{r echo=TRUE}
 
