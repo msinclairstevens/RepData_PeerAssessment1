@@ -53,6 +53,7 @@ library(lubridate, quietly="TRUE")
 
 ```r
 library(lattice, quietly="TRUE")
+library(ggplot2, quietly="TRUE")
 ```
 
 ### Report session environment
@@ -73,15 +74,17 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] lattice_0.20-33  lubridate_1.3.3  knitr_1.10.5     dplyr_0.4.2     
-## [5] data.table_1.9.4
+## [1] ggplot2_1.0.1    lattice_0.20-33  lubridate_1.3.3  knitr_1.10.5    
+## [5] dplyr_0.4.2      data.table_1.9.4
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.11.6     assertthat_0.1  digest_0.6.8    grid_3.2.0     
-##  [5] R6_2.0.1        chron_2.3-45    plyr_1.8.2      DBI_0.3.1      
-##  [9] formatR_1.2     magrittr_1.5    evaluate_0.7    stringi_0.4-1  
-## [13] reshape2_1.4.1  rmarkdown_0.6.1 tools_3.2.0     stringr_1.0.0  
-## [17] parallel_3.2.0  yaml_2.1.13     memoise_0.2.1   htmltools_0.2.6
+##  [1] Rcpp_0.11.6      magrittr_1.5     MASS_7.3-40      munsell_0.4.2   
+##  [5] colorspace_1.2-6 R6_2.0.1         stringr_1.0.0    plyr_1.8.2      
+##  [9] tools_3.2.0      parallel_3.2.0   grid_3.2.0       gtable_0.1.2    
+## [13] DBI_0.3.1        htmltools_0.2.6  yaml_2.1.13      digest_0.6.8    
+## [17] assertthat_0.1   reshape2_1.4.1   formatR_1.2      memoise_0.2.1   
+## [21] evaluate_0.7     rmarkdown_0.6.1  stringi_0.4-1    scales_0.2.5    
+## [25] chron_2.3-45     proto_0.3-10
 ```
 
 ## Section 1: Loading and preprocessing the data
@@ -1271,29 +1274,14 @@ summary(perioddata2)
 ## 
 ```
 
-#### Calculate average steps across days.
-Should still be around 10766.19...compare the summaries for the subsetted data and the joined data above.
-Unfortunately those show by interval.
-
-
-                         
-perioddata3 <- perioddata2 %>%
-              group_by(date)%>%
-              mutate(averagefordate = mean(steps))
 
 ### 5.2 Graph comparison of weekend and weekday data
 5.2. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
 
+par(mfrow = c(2,1)) # side-by-side plot, 2 rows, 1 column
+plot(weekday$interval, (weekday$steps), type="l",main="Weekday Activity", xlab="Interval", ylab="Average Number of Steps")
+plot(weekend$interval, (weekend$steps), type="l",main="Weekend Activity", xlab="Interval", ylab="Average Number of Steps")
 
-```r
-library(lattice)
-periods <- xyplot(perioddata3$steps ~ perioddata3$averagefordate|perioddata3$timespan,
-       type="l",
-       layout=c(1,2),xlab="Interval",ylab="Number of Steps"
-       )
-periods      
-```
-
-![](PA1_template_files/figure-html/unnamed-chunk-28-1.png) 
-
-The subject seems to be a more active throughout the afternoon hours on weekdays than on weekends.
+Subject seems less active on the weekend afternoons. 
+    
+    
