@@ -327,11 +327,10 @@ as.double(median(calcsforprocdate$totalfordate))
 ```{r echo=TRUE}
 original <- sum(dtdata$steps, na.rm=TRUE)
 processed <- sum(procdata$steps)
-original - processed
+processed - original #the number of observations imputed. This should be 86123.52, (8 * 10765.44).
 original/53  #original mean for each day
 processed/61 #imputed mean for each day
 ```
-
 
 
 ## Section 5: Are there differences in activity patterns between weekdays and weekends?
@@ -368,35 +367,16 @@ summary(perioddata2)
 ```
 
 #### Calculate average steps across days.
+Should still be around 10766.19...compare the summaries for the subsetted data and the joined data above.
+Unfortunately those show by interval.
 
-```{r echo=TRUE}
-calc <- summarize(group_by(perioddata2, date), average=mean(steps)) #This works but I don't think it's right
-perioddata2 <- mutate(perioddata2, averagefordate=calc$average)
 
-summary(perioddata2)
-```       
+                         
+perioddata3 <- perioddata2 %>%
+              group_by(date)%>%
+              mutate(averagefordate = mean(steps))
 
 ### 5.2 Graph comparison of weekend and weekday data
 5.2. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
 
-```{r echo=TRUE}
-library(lattice)
-xyplot(perioddata3$steps ~ perioddata3$interval|perioddata3$timespan,
-       type="l",
-       layout=c(1,2),xlab="Interval",ylab="Number of Steps"
-       )
-       
-```
-
-The subject seems to be a more active throughout the afternoon hours on weekdays than on weekends.
-
-TODO Need to get the average by date not interval.
-
-```{r echo=TRUE}
-library(lattice)
-xyplot(perioddata3$steps ~ perioddata3$averagefordate|perioddata3$timespan,
-       type="l",
-       layout=c(1,2),xlab="Interval",ylab="Number of Steps"
-       )
-       
-```
+TODO
