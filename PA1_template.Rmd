@@ -371,9 +371,11 @@ summary(perioddata2)
 ### 5.2 Graph comparison of weekend and weekday data
 5.2. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
 
+```{r echo=TRUE}
 par(mfrow = c(2,1)) # side-by-side plot, 2 rows, 1 column
 plot(weekday$interval, (weekday$steps), type="l",main="Weekday Activity", xlab="Interval", ylab="Average Number of Steps")
 plot(weekend$interval, (weekend$steps), type="l",main="Weekend Activity", xlab="Interval", ylab="Average Number of Steps")
+```
 
 Subject seems less active on the weekend afternoons. 
     
