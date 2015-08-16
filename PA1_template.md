@@ -1288,5 +1288,18 @@ plot(weekend$interval, (weekend$steps), type="l",main="Weekend Activity", xlab="
 ![](PA1_template_files/figure-html/unnamed-chunk-28-1.png) 
 
 Subject seems less active on the weekend afternoons. 
+
+#### Bonus
+Did this in ggplot with the rejoined data just to see if it's giving me the same info.
+The data looks about the same and the formatting is nicer.
+ggplot does a better job of showing that there are 24 intervals.
+
+
+```r
+library(ggplot2)
+qplot(interval, steps, data=perioddata3, facets= timespan ~ .)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-29-1.png) 
     
     
