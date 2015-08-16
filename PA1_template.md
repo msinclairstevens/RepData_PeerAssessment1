@@ -1447,20 +1447,14 @@ summary(perioddata2)
 
 
 ```r
-qplot(interval, avg, data=perioddata2, facets= timespan ~ .) #This kinda works, data wrong
+library(lattice)
+xyplot(perioddata3$steps ~ perioddata3$interval|perioddata3$timespan,
+       type="l",
+       layout=c(1,2),xlab="Interval",ylab="Number of Steps"
+       )
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-26-1.png) 
 
-
-```r
-with(calcsforinterval, plot(interval, averageforinterval, type="l", main="Daily Activity Pattern", xlab="5-minute intervals over a 24-hour period", ylab="Average number of steps per interval", xlim=c(0,2400), xaxt="n" ))
-x <- axTicks(1) # Seems like you have to make it match the ticks.
-
-axis(1, at=x, labels=c("00:00", "05:00", "10:00", "15:00", "20:00"))
-```
-
-![](PA1_template_files/figure-html/unnamed-chunk-27-1.png) 
-
-
+The subject seems to be a more active throughout the afternoon hours on weekdays than on weekends.
 

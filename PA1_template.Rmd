@@ -11,7 +11,7 @@ library(data.table, quietly="TRUE")
 library(dplyr, quietly="TRUE")
 library(knitr, quietly="TRUE")
 library(lubridate, quietly="TRUE")
-library(ggplot2, quietly="TRUE")
+library(lattice, quietly="TRUE")
 
 ```
 
@@ -97,6 +97,10 @@ the dataset.
 2. Calculate and report the **mean** and **median** total number of steps taken per day.  
 
 ### Calculate sum, mean, and median by date.
+For each date, calculate the total number of steps taken. There should be 61 sums with 8 NAs. 
+For each date, calculate the average number of steps taken. This is the average of the 288 observations for each day, so it is actually the average number of steps in any 5-minute period. 
+For each date, calculate the midpoint of the 288 observations. If you do a table of the values, it shows that there 11014 out of the 17568 observations showed zero steps. That's why the median for any given day is zero.
+
 ```{r echo=TRUE}
 calcsfordate <- summarize(group_by(dtdata,date),
                          totalfordate = sum(steps),
@@ -105,9 +109,13 @@ calcsfordate <- summarize(group_by(dtdata,date),
                          )
 ```
 
+### Check math logic. 
+sum(dtdata$steps[which(dtdata$date=="2012-10-04")]) #Should be 12116
+mean(dtdata$steps[which(dtdata$date=="2012-10-04")]) #Should be 42.0694444
+
 ### Examine the data aggregated by date.
 ```{r echo=TRUE}
-kable(calcsfordate) 
+kable(calcsfordate) #This looked great in the html until I uploaded it to github.
 table(calcsfordate$totalfordate) #53 days.
 min(calcsfordate$totalfordate, na.rm=TRUE)
 max(calcsfordate$totalfordate, na.rm=TRUE)
@@ -130,6 +138,7 @@ hist(calcsfordate$totalfordate, breaks=10, main="Spread of average number of ste
 2. Calculate and report the **mean** and **median** total number of steps taken per day.  
 
 I couldn't tell what this question wanted so I answered it two ways. 
+
 1. I took the mean and median of the 53 totals used for the histogram. This is so I could see how many daily totals were above and below average and get a sense of any skew.  
 2. I calculated the mean and median for the total number of steps taken each day. As each day has 288 observations and the majority of them are zero (think eight hours of sleep and eight hours of sitting at work), each daily graph of steps is very skewed and the median is always zero.
 
@@ -353,15 +362,13 @@ summary(perioddata2)
 ```       
 
 ```{r echo=TRUE}
-qplot(interval, avg, data=perioddata2, facets= timespan ~ .) #This kinda works, data wrong
+library(lattice)
+xyplot(perioddata3$steps ~ perioddata3$interval|perioddata3$timespan,
+       type="l",
+       layout=c(1,2),xlab="Interval",ylab="Number of Steps"
+       )
+       
 ```
 
-```{r echo=TRUE}
-with(calcsforinterval, plot(interval, averageforinterval, type="l", main="Daily Activity Pattern", xlab="5-minute intervals over a 24-hour period", ylab="Average number of steps per interval", xlim=c(0,2400), xaxt="n" ))
-x <- axTicks(1) # Seems like you have to make it match the ticks.
-
-axis(1, at=x, labels=c("00:00", "05:00", "10:00", "15:00", "20:00"))
-```
-
-
+The subject seems to be a more active throughout the afternoon hours on weekdays than on weekends.
 
