@@ -9,8 +9,9 @@ Load the packages required.
 ```{r echo=TRUE, results="hide"}
 library(data.table, quietly="TRUE")
 library(dplyr, quietly="TRUE")
-library(lubridate, quietly="TRUE")
 library(knitr, quietly="TRUE")
+library(lubridate, quietly="TRUE")
+library(ggplot2, quietly="TRUE")
 
 ```
 
@@ -321,7 +322,9 @@ the dataset with the filled-in missing values for this part.
 1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
 
 ### Determine the day of the week for each date.
+```{r echo=TRUE}
 dayofweek <- weekdays(as.numeric(procdata$date))
+w <- length(dayofweek)
 timespan <- factor(c(1:w), levels=c("weekday", "weekend"))
 perioddata <- mutate(procdata, dayofweek, timespan)
 table(perioddata$dayofweek) #check
@@ -334,13 +337,31 @@ weekday <- filter(perioddata, dayofweek != "Sat", dayofweek != "Sun")%>%
    mutate(timespan = "weekday")
 summary(weekday)
 
-perioddata2 <- rbind(weekday,weekend) #Put them back together.
-arrange(perioddata2, date)
+perioddata2 <- rbind(weekday,weekend)%>%
+  arrange(date)
 
+summary(perioddata2)
+```
 
+### Calculate average steps across days.
 
+```{r echo=TRUE}
+calc <- summarize(group_by(perioddata2, date), average=mean(steps)) #This works but I don't think it's right
+perioddata2 <- mutate(perioddata2, averagefordate=calc$average)
 
+summary(perioddata2)
+```       
 
+```{r echo=TRUE}
+qplot(interval, avg, data=perioddata2, facets= timespan ~ .) #This kinda works, data wrong
+```
+
+```{r echo=TRUE}
+with(calcsforinterval, plot(interval, averageforinterval, type="l", main="Daily Activity Pattern", xlab="5-minute intervals over a 24-hour period", ylab="Average number of steps per interval", xlim=c(0,2400), xaxt="n" ))
+x <- axTicks(1) # Seems like you have to make it match the ticks.
+
+axis(1, at=x, labels=c("00:00", "05:00", "10:00", "15:00", "20:00"))
+```
 
 
 

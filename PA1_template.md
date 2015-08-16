@@ -37,6 +37,7 @@ library(dplyr, quietly="TRUE")
 ```
 
 ```r
+library(knitr, quietly="TRUE")
 library(lubridate, quietly="TRUE")
 ```
 
@@ -50,7 +51,7 @@ library(lubridate, quietly="TRUE")
 ```
 
 ```r
-library(knitr, quietly="TRUE")
+library(ggplot2, quietly="TRUE")
 ```
 
 ### Report session environment
@@ -71,14 +72,17 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] knitr_1.10.5     lubridate_1.3.3  dplyr_0.4.2      data.table_1.9.4
+## [1] ggplot2_1.0.1    lubridate_1.3.3  knitr_1.10.5     dplyr_0.4.2     
+## [5] data.table_1.9.4
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.11.6     assertthat_0.1  digest_0.6.8    R6_2.0.1       
-##  [5] chron_2.3-45    plyr_1.8.2      DBI_0.3.1       formatR_1.2    
-##  [9] magrittr_1.5    evaluate_0.7    stringi_0.4-1   reshape2_1.4.1 
-## [13] rmarkdown_0.6.1 tools_3.2.0     stringr_1.0.0   parallel_3.2.0 
-## [17] yaml_2.1.13     memoise_0.2.1   htmltools_0.2.6
+##  [1] Rcpp_0.11.6      magrittr_1.5     MASS_7.3-40      munsell_0.4.2   
+##  [5] colorspace_1.2-6 R6_2.0.1         stringr_1.0.0    plyr_1.8.2      
+##  [9] tools_3.2.0      parallel_3.2.0   grid_3.2.0       gtable_0.1.2    
+## [13] DBI_0.3.1        htmltools_0.2.6  yaml_2.1.13      digest_0.6.8    
+## [17] assertthat_0.1   reshape2_1.4.1   formatR_1.2      memoise_0.2.1   
+## [21] evaluate_0.7     rmarkdown_0.6.1  stringi_0.4-1    scales_0.2.5    
+## [25] chron_2.3-45     proto_0.3-10
 ```
 
 ## Loading and preprocessing the data
@@ -1321,26 +1325,142 @@ the dataset with the filled-in missing values for this part.
 1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
 
 ### Determine the day of the week for each date.
+
+```r
 dayofweek <- weekdays(as.numeric(procdata$date))
+w <- length(dayofweek)
 timespan <- factor(c(1:w), levels=c("weekday", "weekend"))
 perioddata <- mutate(procdata, dayofweek, timespan)
 table(perioddata$dayofweek) #check
+```
 
+```
+## 
+##  Sun  Mon  Tue  Wed  Thu  Fri  Sat 
+## 2592 2592 2592 2304 2304 2592 2592
+```
+
+```r
 weekend <-filter(perioddata, dayofweek == "Sat" | dayofweek == "Sun")%>%
    mutate(timespan = "weekend")
 summary(weekend)   
-   
+```
+
+```
+##          date         interval          steps             avg         
+##  2012-10-02: 288   Min.   :   0.0   Min.   :  0.00   Min.   :  0.000  
+##  2012-10-03: 288   1st Qu.: 588.8   1st Qu.:  0.00   1st Qu.:  2.486  
+##  2012-10-09: 288   Median :1177.5   Median :  0.00   Median : 34.113  
+##  2012-10-10: 288   Mean   :1177.5   Mean   : 35.81   Mean   : 37.383  
+##  2012-10-16: 288   3rd Qu.:1766.2   3rd Qu.: 16.00   3rd Qu.: 52.835  
+##  2012-10-17: 288   Max.   :2355.0   Max.   :806.00   Max.   :206.170  
+##  (Other)   :3456                                                      
+##  dayofweek     timespan   
+##  Sun:2592   weekday:   0  
+##  Mon:   0   weekend:5184  
+##  Tue:   0                 
+##  Wed:   0                 
+##  Thu:   0                 
+##  Fri:   0                 
+##  Sat:2592
+```
+
+```r
 weekday <- filter(perioddata, dayofweek != "Sat", dayofweek != "Sun")%>%
    mutate(timespan = "weekday")
 summary(weekday)
+```
 
-perioddata2 <- rbind(weekday,weekend) #Put them back together.
-arrange(perioddata2, date)
+```
+##          date          interval          steps             avg         
+##  2012-10-01:  288   Min.   :   0.0   Min.   :  0.00   Min.   :  0.000  
+##  2012-10-04:  288   1st Qu.: 588.8   1st Qu.:  0.00   1st Qu.:  2.486  
+##  2012-10-05:  288   Median :1177.5   Median :  0.00   Median : 34.113  
+##  2012-10-06:  288   Mean   :1177.5   Mean   : 38.04   Mean   : 37.383  
+##  2012-10-07:  288   3rd Qu.:1766.2   3rd Qu.: 31.00   3rd Qu.: 52.835  
+##  2012-10-08:  288   Max.   :2355.0   Max.   :802.00   Max.   :206.170  
+##  (Other)   :10656                                                      
+##  dayofweek     timespan    
+##  Sun:   0   weekday:12384  
+##  Mon:2592   weekend:    0  
+##  Tue:2592                  
+##  Wed:2304                  
+##  Thu:2304                  
+##  Fri:2592                  
+##  Sat:   0
+```
+
+```r
+perioddata2 <- rbind(weekday,weekend)%>%
+  arrange(date)
+
+summary(perioddata2)
+```
+
+```
+##          date          interval          steps             avg         
+##  2012-10-01:  288   Min.   :   0.0   Min.   :  0.00   Min.   :  0.000  
+##  2012-10-02:  288   1st Qu.: 588.8   1st Qu.:  0.00   1st Qu.:  2.486  
+##  2012-10-03:  288   Median :1177.5   Median :  0.00   Median : 34.113  
+##  2012-10-04:  288   Mean   :1177.5   Mean   : 37.38   Mean   : 37.383  
+##  2012-10-05:  288   3rd Qu.:1766.2   3rd Qu.: 27.00   3rd Qu.: 52.835  
+##  2012-10-06:  288   Max.   :2355.0   Max.   :806.00   Max.   :206.170  
+##  (Other)   :15840                                                      
+##  dayofweek     timespan    
+##  Sun:2592   weekday:12384  
+##  Mon:2592   weekend: 5184  
+##  Tue:2592                  
+##  Wed:2304                  
+##  Thu:2304                  
+##  Fri:2592                  
+##  Sat:2592
+```
+
+### Calculate average steps across days.
 
 
+```r
+calc <- summarize(group_by(perioddata2, date), average=mean(steps)) #This works but I don't think it's right
+perioddata2 <- mutate(perioddata2, averagefordate=calc$average)
+
+summary(perioddata2)
+```
+
+```
+##          date          interval          steps             avg         
+##  2012-10-01:  288   Min.   :   0.0   Min.   :  0.00   Min.   :  0.000  
+##  2012-10-02:  288   1st Qu.: 588.8   1st Qu.:  0.00   1st Qu.:  2.486  
+##  2012-10-03:  288   Median :1177.5   Median :  0.00   Median : 34.113  
+##  2012-10-04:  288   Mean   :1177.5   Mean   : 37.38   Mean   : 37.383  
+##  2012-10-05:  288   3rd Qu.:1766.2   3rd Qu.: 27.00   3rd Qu.: 52.835  
+##  2012-10-06:  288   Max.   :2355.0   Max.   :806.00   Max.   :206.170  
+##  (Other)   :15840                                                      
+##  dayofweek     timespan     averagefordate   
+##  Sun:2592   weekday:12384   Min.   : 0.1424  
+##  Mon:2592   weekend: 5184   1st Qu.:34.0938  
+##  Tue:2592                   Median :37.3826  
+##  Wed:2304                   Mean   :37.3826  
+##  Thu:2304                   3rd Qu.:44.4826  
+##  Fri:2592                   Max.   :73.5903  
+##  Sat:2592
+```
 
 
+```r
+qplot(interval, avg, data=perioddata2, facets= timespan ~ .) #This kinda works, data wrong
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-26-1.png) 
+
+
+```r
+with(calcsforinterval, plot(interval, averageforinterval, type="l", main="Daily Activity Pattern", xlab="5-minute intervals over a 24-hour period", ylab="Average number of steps per interval", xlim=c(0,2400), xaxt="n" ))
+x <- axTicks(1) # Seems like you have to make it match the ticks.
+
+axis(1, at=x, labels=c("00:00", "05:00", "10:00", "15:00", "20:00"))
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-27-1.png) 
 
 
 
